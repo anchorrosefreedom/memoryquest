@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ trip.name }} - MemoryQuest</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6; color: #333;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+        }
+        header {
+            padding: 1rem 2rem;
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(255,255,255,0.05); backdrop-filter: blur(10px);
+        }
+        .logo { font-size: 1.5rem; font-weight: bold; color: #fff; }
+        .logo span { color: #e94560; }
+        .nav a { color: #fff; text-decoration: none; opacity: 0.8; margin-left: 1rem; }
+        
+        main { padding: 2rem; max-width: 1000px; margin: 0 auto; }
+        .trip-header {
+            background: rgba(255,255,255,0.95); padding: 1.5rem;
+            border-radius: 12px; margin-bottom: 2rem;
+        }
+        .trip-header h1 { margin-bottom: 0.5rem; }
+        .trip-info { display: flex; gap: 2rem; color: #666; }
+        
+        .destinations { margin-top: 2rem; }
+        .destinations h2 { color: #fff; margin-bottom: 1rem; }
+        
+        .dest-list {
+            display: flex; flex-direction: column; gap: 1rem;
+        }
+        .dest-card {
+            background: rgba(255,255,255,0.95); padding: 1rem 1.5rem;
+            border-radius: 8px; display: flex; align-items: center; gap: 1rem;
+        }
+        .dest-number {
+            width: 32px; height: 32px; background: #e94560; color: #fff;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; flex-shrink: 0;
+        }
+        .dest-info { flex: 1; }
+        .dest-name { font-weight: 600; font-size: 1.1rem; }
+        .dest-location { color: #666; font-size: 0.9rem; }
+        
+        .add-dest {
+            margin-top: 1rem; padding: 1rem; border: 2px dashed rgba(255,255,255,0.3);
+            border-radius: 8px; text-align: center; cursor: pointer;
+            color: rgba(255,255,255,0.7);
+        }
+        .add-dest:hover { border-color: #e94560; color: #e94560; }
+        
+        .empty-state { color: rgba(255,255,255,0.6); text-align: center; padding: 2rem; }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="{{ url_for('index') }}" class="logo">Memory<span>Quest</span></a>
+        <nav class="nav">
+            <a href="{{ url_for('dashboard') }}">My Trips</a>
+            <a href="{{ url_for('logout') }}">Log Out</a>
+        </nav>
+    </header>
+    
+    <main>
+        <div class="trip-header">
+            <h1>{{ trip.name }}</h1>
+            <div class="trip-info">
+                <span>Start: {{ trip.start_location or 'Not set' }}</span>
+                <span>Style: {{ trip.travel_style }}</span>
+                <span>{{ trip.max_hours_per_day }}h/day</span>
+            </div>
+        </div>
+        
+        <div class="destinations">
+            <h2>Destinations</h2>
+            
+            <div class="dest-list" id="destList">
+                {% if trip.destinations %}
+                {% for dest in trip.destinations %}
+                <div class="dest-card">
+                    <div class="dest-number">{{ loop.index }}</div>
+                    <div class="dest-info">
+                        <div class="dest-name">{{ dest.name }}</div>
+                        <div class="dest-location">{{ dest.location }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="empty-state">No destinations yet. Add your first stop!</div>
+                {% endif %}
+            </div>
+            
+            <div class="add-dest" onclick="addDestination()">
+                + Add Destination
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        const tripId = {{ trip.id }};
+        
+        function addDestination() {
+            const name = prompt('Destination name:');
+            if (!name) return;
+            
+            const location = prompt('Location (city, state):');
+            const order = document.querySelectorAll('.dest-card').length;
+            
+            fetch(`/api/trips/${tripId}/destinations`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    name: name,
+                    location: location || '',
+                    order: order
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                location.reload();
+            });
+        }
+    </script>
+</body>
+</html>
